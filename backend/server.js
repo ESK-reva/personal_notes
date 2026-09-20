@@ -5,12 +5,18 @@ const app = express();
 const PORT = 3000;
 
 // Allow React frontend to communicate with this backend
+// Allow React frontend to communicate with this backend
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "http://localhost:5173");
-    res.header("Access-Control-Allow-Methods", "GET, POST");
+    res.header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
     res.header("Access-Control-Allow-Headers", "Content-Type");
 
+    if (req.method === "OPTIONS") {
+        return res.sendStatus(204);
+    }
+
     next();
+
 });
 
 // Parse JSON request bodies
@@ -54,6 +60,24 @@ app.post("/api/notes", (req, res) => {
         .get(result.lastInsertRowid);
 
     res.status(201).json(newNote);
+});
+// Delete a note
+app.delete("/api/notes/:id", (req, res) => {
+    const { id } = req.params;
+
+    const result = db
+        .prepare("DELETE FROM notes WHERE id = ?")
+        .run(id);
+
+    if (result.changes === 0) {
+        return res.status(404).json({
+            error: "Note not found"
+        });
+    }
+
+    res.json({
+        message: "Note deleted successfully"
+    });
 });
 
 // Start server

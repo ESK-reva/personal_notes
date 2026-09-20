@@ -53,6 +53,29 @@ function App() {
     }
   };
 
+  // Delete a note from the backend
+  const deleteNote = async (id) => {
+    console.log("Delete clicked. Note ID:", id);
+
+    try {
+      const response = await fetch(`http://localhost:3000/api/notes/${id}`, {
+        method: "DELETE",
+      });
+
+      console.log("Delete response:", response.status);
+
+      if (!response.ok) {
+        throw new Error("Failed to delete note");
+      }
+
+      setNotes((previousNotes) =>
+        previousNotes.filter((note) => note.id !== id)
+      );
+    } catch (error) {
+      console.error("Error deleting note:", error);
+    }
+  };
+
   return (
     <div className="app">
 
@@ -199,6 +222,13 @@ function App() {
                   {note.created_at && (
                     <small>{note.created_at}</small>
                   )}
+
+                  <button
+                    className="delete-button"
+                    onClick={() => deleteNote(note.id)}
+                  >
+                    Delete
+                  </button>
 
                 </article>
               ))
