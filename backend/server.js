@@ -8,7 +8,7 @@ const PORT = 3000;
 // Allow React frontend to communicate with this backend
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "http://localhost:5173");
-    res.header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+    res.header("Access-Control-Allow-Methods", "GET, POST, DELETE, PATCH, OPTIONS");
     res.header("Access-Control-Allow-Headers", "Content-Type");
 
     if (req.method === "OPTIONS") {
@@ -78,6 +78,31 @@ app.delete("/api/notes/:id", (req, res) => {
     res.json({
         message: "Note deleted successfully"
     });
+});// Toggle favorite status
+app.patch("/api/notes/:id/favorite", (req, res) => {
+    const { id } = req.params;
+
+    const note = db
+        .prepare("SELECT * FROM notes WHERE id = ?")
+        .get(id);
+
+    if (!note) {
+        return res.status(404).json({
+            error: "Note not found"
+        });
+    }
+
+    const newFavoriteStatus = note.favorite === 1 ? 0 : 1;
+
+    db.prepare(
+        "UPDATE notes SET favorite = ? WHERE id = ?"
+    ).run(newFavoriteStatus, id);
+
+    const updatedNote = db
+        .prepare("SELECT * FROM notes WHERE id = ?")
+        .get(id);
+
+    res.json(updatedNote);
 });
 
 // Start server

@@ -5,11 +5,17 @@ function App() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [notes, setNotes] = useState([]);
+  const [currentView, setCurrentView] = useState("all");
 
   // Load notes from the backend when the page opens
   useEffect(() => {
     fetch("http://localhost:3000/api/notes")
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to load notes");
+        }
+        return response.json();
+      })
       .then((data) => {
         setNotes(data);
       })
@@ -45,7 +51,6 @@ function App() {
       const newNote = await response.json();
 
       setNotes((previousNotes) => [newNote, ...previousNotes]);
-
       setTitle("");
       setContent("");
     } catch (error) {
@@ -55,14 +60,13 @@ function App() {
 
   // Delete a note from the backend
   const deleteNote = async (id) => {
-    console.log("Delete clicked. Note ID:", id);
-
     try {
-      const response = await fetch(`http://localhost:3000/api/notes/${id}`, {
-        method: "DELETE",
-      });
-
-      console.log("Delete response:", response.status);
+      const response = await fetch(
+        `http://localhost:3000/api/notes/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to delete note");
@@ -76,145 +80,167 @@ function App() {
     }
   };
 
+  // Toggle favorite status in the backend
+  const toggleFavorite = async (id) => {
+    try {
+      const response = await fetch(
+        `http://localhost:3000/api/notes/${id}/favorite`,
+        {
+          method: "PATCH",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update favorite");
+      }
+
+      const updatedNote = await response.json();
+
+      setNotes((previousNotes) =>
+        previousNotes.map((note) =>
+          note.id === id ? updatedNote : note
+        )
+      );
+    } catch (error) {
+      console.error("Error updating favorite:", error);
+    }
+  };
+
+  // Show all notes or only favorite notes
+  const displayedNotes =
+    currentView === "favorites"
+      ? notes.filter((note) => Number(note.favorite) === 1)
+      : notes;
+
   return (
     <div className="app">
-
-      {/* ================= SIDEBAR ================= */}
+      {/* SIDEBAR */}
       <aside className="sidebar">
-
-        {/* Logo */}
         <div className="brand">
           <img
             src="/logo.png"
             alt="Shreya Notes Logo"
             className="logo"
           />
-
           <span className="brand-name">SHREYA</span>
         </div>
 
-        {/* Navigation */}
         <nav className="navigation">
-
-          <button className="nav-item active">
+          <button
+            type="button"
+            className={`nav-item ${currentView === "all" ? "active" : ""}`}
+            onClick={() => setCurrentView("all")}
+          >
             <span className="nav-icon">⌂</span>
             <span>All Notes</span>
           </button>
 
-          <button className="nav-item">
+          <button
+            type="button"
+            className={`nav-item ${
+              currentView === "favorites" ? "active" : ""
+            }`}
+            onClick={() => setCurrentView("favorites")}
+          >
             <span className="nav-icon">♡</span>
             <span>Favorites</span>
           </button>
-
         </nav>
 
-        {/* Bottom */}
         <div className="sidebar-bottom">
           <span className="sidebar-line"></span>
           <p>MY NOTES</p>
           <span>© 2026</span>
         </div>
-
       </aside>
 
-
-      {/* ================= MAIN CONTENT ================= */}
+      {/* MAIN CONTENT */}
       <main className="main-content">
-
-        {/* Header */}
+        {/* HEADER */}
         <header className="page-header">
-
           <div>
             <p className="eyebrow">YOUR PERSONAL SPACE</p>
 
-            <h1>My Notes</h1>
+            <h1>
+              {currentView === "favorites" ? "Favorites" : "My Notes"}
+            </h1>
 
-            <p className="tagline">
-              Thoughts worth keeping.
-            </p>
+            <p className="tagline">Thoughts worth keeping.</p>
           </div>
 
           <div className="header-count">
-            <span>{notes.length}</span>
+            <span>{displayedNotes.length}</span>
             <small>
-              {notes.length === 1 ? "note" : "notes"}
+              {displayedNotes.length === 1 ? "note" : "notes"}
             </small>
           </div>
-
         </header>
 
+        {/* CREATE NOTE */}
+        {currentView === "all" && (
+          <section className="create-section">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">CREATE SOMETHING</p>
+                <h2>New Note</h2>
+              </div>
 
-        {/* ================= CREATE NOTE ================= */}
-        <section className="create-section">
-
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">CREATE SOMETHING</p>
-
-              <h2>New Note</h2>
+              <div className="section-icon">✦</div>
             </div>
 
-            <div className="section-icon">✦</div>
-          </div>
+            <form onSubmit={addNote}>
+              <div className="form-group">
+                <label htmlFor="note-title">Title</label>
+                <input
+                  id="note-title"
+                  type="text"
+                  placeholder="Give your note a title..."
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                />
+              </div>
 
+              <div className="form-group">
+                <label htmlFor="note-content">Content</label>
+                <textarea
+                  id="note-content"
+                  placeholder="Write something worth remembering..."
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  required
+                ></textarea>
+              </div>
 
-          {/* Note Form */}
-          <form onSubmit={addNote}>
+              <button type="submit" className="add-note-button">
+                <span>+</span>
+                Add Note
+              </button>
+            </form>
+          </section>
+        )}
 
-            <div className="form-group">
-              <label>Title</label>
-
-              <input
-                type="text"
-                placeholder="Give your note a title..."
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </div>
-
-
-            <div className="form-group">
-              <label>Content</label>
-
-              <textarea
-                placeholder="Write something worth remembering..."
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-              ></textarea>
-            </div>
-
-
-            <button type="submit" className="add-note-button">
-              <span>+</span>
-              Add Note
-            </button>
-
-          </form>
-
-        </section>
-
-
-        {/* ================= NOTES ================= */}
+        {/* NOTES */}
         <section className="notes-section">
-
           <div className="notes-heading">
             <div>
               <p className="eyebrow">YOUR COLLECTION</p>
-              <h2>Notes</h2>
+              <h2>
+                {currentView === "favorites" ? "Favorite Notes" : "Notes"}
+              </h2>
             </div>
           </div>
 
-
           <div className="notes-list">
-
-            {notes.length === 0 ? (
+            {displayedNotes.length === 0 ? (
               <p className="empty-notes">
-                No notes yet. Create your first one!
+                {currentView === "favorites"
+                  ? "No favorite notes yet. Tap the heart on a note to add it here!"
+                  : "No notes yet. Create your first one!"}
               </p>
             ) : (
-              notes.map((note) => (
+              displayedNotes.map((note) => (
                 <article className="note-card" key={note.id}>
-
                   <h3>{note.title}</h3>
 
                   <p>{note.content}</p>
@@ -223,31 +249,46 @@ function App() {
                     <small>{note.created_at}</small>
                   )}
 
-                  <button
-                    className="delete-button"
-                    onClick={() => deleteNote(note.id)}
-                  >
-                    Delete
-                  </button>
+                  <div className="note-actions">
+                    <button
+                      type="button"
+                      className="favorite-button"
+                      onClick={() => toggleFavorite(note.id)}
+                      aria-label={
+                        Number(note.favorite) === 1
+                          ? "Remove from favorites"
+                          : "Add to favorites"
+                      }
+                      title={
+                        Number(note.favorite) === 1
+                          ? "Remove from favorites"
+                          : "Add to favorites"
+                      }
+                    >
+                      {Number(note.favorite) === 1 ? "♥" : "♡"}
+                    </button>
 
+                    <button
+                      type="button"
+                      className="delete-button"
+                      onClick={() => deleteNote(note.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </article>
               ))
             )}
-
           </div>
-
         </section>
 
-
-        {/* ================= FOOTER ================= */}
+        {/* FOOTER */}
         <footer className="footer">
           <span>Thoughts worth keeping</span>
           <span className="footer-heart">♥</span>
           <span>SHREYA</span>
         </footer>
-
       </main>
-
     </div>
   );
 }
