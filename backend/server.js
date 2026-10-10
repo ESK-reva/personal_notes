@@ -1,12 +1,24 @@
+
 const express = require("express");
 const db = require("./db");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+
+// Allow local development and the deployed Vercel frontend
+const allowedOrigins = [
+    "http://localhost:5173",
+    "https://personal-notes-gamma.vercel.app"
+];
 
 // Allow React frontend to communicate with this backend
 app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "http://localhost:5173");
+    const origin = req.headers.origin;
+
+    if (allowedOrigins.includes(origin)) {
+        res.header("Access-Control-Allow-Origin", origin);
+    }
+
     res.header(
         "Access-Control-Allow-Methods",
         "GET, POST, PATCH, DELETE, OPTIONS"
@@ -173,6 +185,7 @@ app.delete("/api/notes/:id/permanent", (req, res) => {
         message: "Note permanently deleted"
     });
 });
+
 // Permanently delete notes that have been in the Bin for more than 12 hours
 const cleanupOldNotes = () => {
     const result = db.prepare(`
@@ -193,7 +206,8 @@ cleanupOldNotes();
 
 // Check every 5 minutes
 setInterval(cleanupOldNotes, 5 * 60 * 1000);
-// Start server
-app.listen(PORT, () => {
-    console.log(`Backend server running at http://localhost:${PORT}`);
+
+// Start server using Render's assigned port
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Backend server running on port ${PORT}`);
 });
