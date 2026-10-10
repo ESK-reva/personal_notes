@@ -3,6 +3,12 @@ const express = require("express");
 const db = require("./db");
 
 const app = express();
+app.get("/", (req, res) => {
+    res.json({
+        message: "SHREYA backend is running",
+        version: "diagnostic-check"
+    });
+});
 const PORT = process.env.PORT || 3000;
 
 // Allow local development and the deployed Vercel frontend
