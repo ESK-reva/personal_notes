@@ -11,11 +11,12 @@ db.exec(`
   )
 `);
 
-// Add favorite column if it does not already exist
+// Get existing table columns
 const columns = db
   .prepare("PRAGMA table_info(notes)")
   .all();
 
+// Add favorite column if it does not exist
 const hasFavoriteColumn = columns.some(
   (column) => column.name === "favorite"
 );
@@ -24,6 +25,23 @@ if (!hasFavoriteColumn) {
   db.exec(`
     ALTER TABLE notes
     ADD COLUMN favorite INTEGER NOT NULL DEFAULT 0
+  `);
+}
+
+// Refresh the column list after the favorite migration
+const updatedColumns = db
+  .prepare("PRAGMA table_info(notes)")
+  .all();
+
+// Add deleted_at column if it does not exist
+const hasDeletedAtColumn = updatedColumns.some(
+  (column) => column.name === "deleted_at"
+);
+
+if (!hasDeletedAtColumn) {
+  db.exec(`
+    ALTER TABLE notes
+    ADD COLUMN deleted_at TEXT DEFAULT NULL
   `);
 }
 
