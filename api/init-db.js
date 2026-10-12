@@ -16,9 +16,24 @@ export default async function handler(req, res) {
             error: "Unauthorized"
         });
     }
+    
+    if (process.env.DISABLE_DB_INIT === "true") {
+        return res.status(403).json({
+            error: "Database initialization is disabled."
+        });
+    }
+
 
     try {
+ 
         await sql`
+            CREATE TABLE IF NOT EXISTS users (
+                id BIGSERIAL PRIMARY KEY,
+                email TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
+
             CREATE TABLE IF NOT EXISTS notes (
                 id BIGSERIAL PRIMARY KEY,
                 title TEXT NOT NULL,
@@ -26,8 +41,12 @@ export default async function handler(req, res) {
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 favorite INTEGER NOT NULL DEFAULT 0,
                 deleted_at TIMESTAMPTZ DEFAULT NULL
-            )
+            );
+
+            ALTER TABLE notes
+            ADD COLUMN IF NOT EXISTS user_id BIGINT REFERENCES users(id);
         `;
+
 
         return res.status(200).json({
             message: "SHREYA database initialized successfully"

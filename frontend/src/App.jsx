@@ -1,7 +1,10 @@
+
 import { useEffect, useState } from "react";
 import "./App.css";
 
 const API_URL = "/api/notes";
+const AUTH_API = "/api/auth";
+
 
 function App() {
   const [title, setTitle] = useState("");
@@ -11,6 +14,11 @@ function App() {
   const [currentView, setCurrentView] = useState("all");
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState(null);
+  
+const [user, setUser] = useState(null);
+const [authMode, setAuthMode] = useState("login");
+const [authLoading, setAuthLoading] = useState(true);
+
 
   const loadNotes = async () => {
     try {
@@ -34,10 +42,89 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    loadNotes();
-    loadBinNotes();
-  }, []);
+  
+useEffect(() => {
+  const checkSession = async () => {
+    try {
+      const response = await fetch(`${AUTH_API}/me`);
+
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+      }
+    } catch (err) {
+      console.error("Session check failed:", err);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  checkSession();
+}, []);
+
+useEffect(() => {
+  if (!user) return;
+
+  loadNotes();
+  loadBinNotes();
+}, [user]);
+
+  
+const [authEmail, setAuthEmail] = useState("");
+const [authPassword, setAuthPassword] = useState("");
+const [authError, setAuthError] = useState("");
+const [authSubmitting, setAuthSubmitting] = useState(false);
+
+const handleAuth = async (e) => {
+  e.preventDefault();
+  setAuthError("");
+  setAuthSubmitting(true);
+
+  try {
+    const endpoint =
+      authMode === "signup" ? "signup" : "login";
+
+    const response = await fetch(`${AUTH_API}/${endpoint}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: authEmail.trim(),
+        password: authPassword,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Authentication failed.");
+    }
+
+    setUser(data.user);
+    setAuthEmail("");
+    setAuthPassword("");
+    setAuthError("");
+  } catch (err) {
+    setAuthError(err.message || "Something went wrong.");
+  } finally {
+    setAuthSubmitting(false);
+  }
+};
+
+const handleLogout = async () => {
+  try {
+    await fetch(`${AUTH_API}/logout`, {
+      method: "POST",
+    });
+  } finally {
+    setUser(null);
+    setNotes([]);
+    setBinNotes([]);
+    setCurrentView("all");
+    setError("");
+  }
+};
 
   const changeView = (view) => {
     setCurrentView(view);
@@ -187,6 +274,69 @@ function App() {
     favorites: "The thoughts you want to keep close.",
     bin: "Restore notes or remove them permanently.",
   };
+  
+if (authLoading) {
+  return <div className="app">Loading SHREYA...</div>;
+}
+
+if (!user) {
+  return (
+    <div className="app">
+      <div className="auth-container">
+        <h1>SHREYA</h1>
+        <p>Your personal space for notes.</p>
+
+        <h2>{authMode === "login" ? "Welcome back" : "Create account"}</h2>
+
+        <form onSubmit={handleAuth}>
+          <input
+            type="email"
+            placeholder="Email address"
+            value={authEmail}
+            onChange={(e) => setAuthEmail(e.target.value)}
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="Password (8–72 characters)"
+            value={authPassword}
+            onChange={(e) => setAuthPassword(e.target.value)}
+            minLength={authMode === "signup" ? 8 : undefined}
+            maxLength={72}
+            required
+          />
+
+          {authError && <p className="auth-error">{authError}</p>}
+
+          <button type="submit" disabled={authSubmitting}>
+            {authSubmitting
+              ? "Please wait..."
+              : authMode === "login"
+                ? "Log in"
+                : "Sign up"}
+          </button>
+        </form>
+
+        <p>
+          {authMode === "login"
+            ? "New to SHREYA?"
+            : "Already have an account?"}
+          {" "}
+          <button
+            type="button"
+            onClick={() => {
+              setAuthMode(authMode === "login" ? "signup" : "login");
+              setAuthError("");
+            }}
+          >
+            {authMode === "login" ? "Create account" : "Log in"}
+          </button>
+        </p>
+      </div>
+    </div>
+  );
+}
 
   return (
     <div className="app-shell">

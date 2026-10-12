@@ -1,13 +1,24 @@
 
 import { sql } from "./db.js";
+import { getSession } from "./auth.js";
 
 export default async function handler(req, res) {
     try {
+        // Require a valid login session
+        const user = await getSession(req);
+
+        if (!user) {
+            return res.status(401).json({
+                error: "Please log in to access your notes."
+            });
+        }
+
         if (req.method === "GET") {
             const notes = await sql`
                 SELECT *
                 FROM notes
-                WHERE deleted_at IS NULL
+                WHERE user_id = ${user.id}
+                  AND deleted_at IS NULL
                 ORDER BY id DESC
             `;
 
@@ -27,8 +38,9 @@ export default async function handler(req, res) {
             }
 
             const [note] = await sql`
-                INSERT INTO notes (title, content)
+                INSERT INTO notes (user_id, title, content)
                 VALUES (
+                    ${user.id},
                     ${title.trim()},
                     ${typeof content === "string" ? content.trim() : ""}
                 )

@@ -1,27 +1,37 @@
 
 import { sql } from "../../db.js";
+import { getSession } from "../../auth.js";
 
 export default async function handler(req, res) {
-    if (req.method !== "PATCH") {
-        res.setHeader("Allow", "PATCH");
-        return res.status(405).json({
-            error: "Method not allowed"
-        });
-    }
-
-    const { id } = req.query;
-
-    if (!id || !/^\d+$/.test(String(id))) {
-        return res.status(400).json({
-            error: "Invalid note ID"
-        });
-    }
-
     try {
+        const user = await getSession(req);
+
+        if (!user) {
+            return res.status(401).json({
+                error: "Please log in to restore your notes."
+            });
+        }
+
+        if (req.method !== "PATCH") {
+            res.setHeader("Allow", "PATCH");
+            return res.status(405).json({
+                error: "Method not allowed"
+            });
+        }
+
+        const { id } = req.query;
+
+        if (!id || !/^\d+$/.test(String(id))) {
+            return res.status(400).json({
+                error: "Invalid note ID"
+            });
+        }
+
         const [note] = await sql`
             UPDATE notes
             SET deleted_at = NULL
             WHERE id = ${id}
+              AND user_id = ${user.id}
               AND deleted_at IS NOT NULL
             RETURNING *
         `;
