@@ -19,11 +19,11 @@ export default async function handler(req, res) {
                 typeof email !== "string" ||
                 typeof password !== "string" ||
                 !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ||
-                password.length < 8 ||
+                password.length < 5 ||
                 password.length > 72
             ) {
                 return res.status(400).json({
-                    error: "Enter a valid email and a password of 8–72 characters."
+                    error: "Enter a valid email and a password of 5–72 characters."
                 });
             }
 
@@ -58,7 +58,7 @@ export default async function handler(req, res) {
                 typeof email !== "string" ||
                 typeof password !== "string" ||
                 !email.trim() ||
-                !password ||
+                password.length<5 ||
                 password.length > 72
             ) {
                 return res.status(400).json({

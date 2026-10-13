@@ -280,64 +280,227 @@ if (authLoading) {
   return <div className="app">Loading SHREYA...</div>;
 }
 
+
 if (!user) {
   return (
-    <div className="app">
-      <div className="auth-container">
-        <h1>SHREYA</h1>
-        <p>Your personal space for notes.</p>
-
-        <h2>{authMode === "login" ? "Welcome back" : "Create account"}</h2>
-
-        <form onSubmit={handleAuth}>
-          <input
-            type="email"
-            placeholder="Email address"
-            value={authEmail}
-            onChange={(e) => setAuthEmail(e.target.value)}
-            required
-          />
-
-          <input
-            type="password"
-            placeholder="Password (8–72 characters)"
-            value={authPassword}
-            onChange={(e) => setAuthPassword(e.target.value)}
-            minLength={authMode === "signup" ? 8 : undefined}
-            maxLength={72}
-            required
-          />
-
-          {authError && <p className="auth-error">{authError}</p>}
-
-          <button type="submit" disabled={authSubmitting}>
-            {authSubmitting
-              ? "Please wait..."
-              : authMode === "login"
-                ? "Log in"
-                : "Sign up"}
-          </button>
-        </form>
-
-        <p>
-          {authMode === "login"
-            ? "New to SHREYA?"
-            : "Already have an account?"}
-          {" "}
-          <button
-            type="button"
-            onClick={() => {
-              setAuthMode(authMode === "login" ? "signup" : "login");
-              setAuthError("");
-            }}
-          >
-            {authMode === "login" ? "Create account" : "Log in"}
-          </button>
-        </p>
+    <div className="auth-page">
+      <div className="auth-sparkles" aria-hidden="true">
+        {Array.from({ length: 18 }, (_, i) => (
+          <span key={i} className={`sparkle sparkle-${i % 6}`}>
+            {i % 3 === 0 ? "✦" : i % 3 === 1 ? "✧" : "·"}
+          </span>
+        ))}
       </div>
+
+      <header className="auth-topbar">
+        <div className="auth-brand">
+          <span className="brand-book">♧</span>
+          <span>SHREYA</span>
+        </div>
+        <div className="auth-top-links">
+          <span>Your Notes</span>
+          <span className="top-star">✦</span>
+          <span>Your Thoughts</span>
+          <span className="top-star">✦</span>
+          <span>Your Space</span>
+        </div>
+      </header>
+
+      <main className="auth-layout">
+        <section className="auth-story">
+          <p className="story-script">
+            Small
+            <br />
+            Notes
+            <br />
+            Big
+            <br />
+            Thoughts <span>♡</span>
+          </p>
+
+          <h1 className="story-title">SHREYA</h1>
+          <p className="story-subtitle">
+            Your personal space for notes.
+          </p>
+
+          <div className="story-divider">
+            <span>────── ✧ ──────</span>
+          </div>
+
+          <div className="story-features">
+            <div>
+              <span className="feature-icon">♧</span>
+              <span>Organize your notes</span>
+            </div>
+            <div>
+              <span className="feature-icon">♡</span>
+              <span>Keep what matters</span>
+            </div>
+            <div>
+              <span className="feature-icon">✧</span>
+              <span>Access anywhere</span>
+            </div>
+            <div>
+              <span className="feature-icon">☆</span>
+              <span>A calmer, focused you</span>
+            </div>
+          </div>
+
+          <div className="auth-bottom-quote">
+            <span>✦</span> A little space, just for you. <span>✦</span>
+          </div>
+        </section>
+
+        <section className="auth-card">
+          <div className="auth-mode-switch">
+            <button
+              type="button"
+              className={authMode === "signup" ? "mode-active" : ""}
+              onClick={() => {
+                setAuthMode("signup");
+                setAuthError("");
+              }}
+            >
+              ♡ &nbsp; Create account
+            </button>
+
+            <button
+              type="button"
+              className={authMode === "login" ? "mode-active" : ""}
+              onClick={() => {
+                setAuthMode("login");
+                setAuthError("");
+              }}
+            >
+              ↪ &nbsp; Login
+            </button>
+          </div>
+
+          <div className="profile-decoration">
+            <div className="profile-orbit">
+              
+<div className="profile-avatar">
+  <img
+    src="/profile.png"
+    alt="SHREYA profile"
+    className="profile-photo"
+  />
+</div>
+
+            </div>
+            <span className="profile-camera">✧</span>
+            <span className="orbit-spark orbit-spark-one">✦</span>
+            <span className="orbit-spark orbit-spark-two">✧</span>
+          </div>
+
+          <h2 className="auth-card-script">
+            {authMode === "login"
+              ? "Your space missed you ♡"
+              : "Let's create your space ♡"}
+          </h2>
+
+          <p className="auth-card-caption">
+            {authMode === "login"
+              ? "Pick up where your thoughts left off."
+              : "A little home for everything on your mind."}
+          </p>
+
+          <form className="auth-form" onSubmit={handleAuth}>
+            <label className="auth-input-wrap">
+              <span className="input-icon">✉</span>
+              <input
+                type="email"
+                placeholder="Email address"
+                autoComplete="email"
+                value={authEmail}
+                onChange={(e) => setAuthEmail(e.target.value)}
+                required
+              />
+            </label>
+
+            <label className="auth-input-wrap">
+              <span className="input-icon">♙</span>
+              <input
+                type="password"
+                placeholder="Password (5–72 characters)"
+                autoComplete={
+                  authMode === "signup"
+                    ? "new-password"
+                    : "current-password"
+                }
+                value={authPassword}
+                onChange={(e) => setAuthPassword(e.target.value)}
+                minLength={5}
+                maxLength={72}
+                required
+              />
+              <span className="input-lock">✧</span>
+            </label>
+
+            {authMode === "signup" && (
+              <div className="password-hints">
+                <span>✓ At least 5 characters</span>
+                <span>✓ Letters & numbers</span>
+                <span>✓ Special characters allowed</span>
+              </div>
+            )}
+
+            {authError && (
+              <p className="auth-error" role="alert">
+                {authError}
+              </p>
+            )}
+
+            <button
+              className="auth-submit"
+              type="submit"
+              disabled={authSubmitting}
+            >
+              <span>
+                {authSubmitting
+                  ? "One moment..."
+                  : authMode === "login"
+                    ? "Log in to your space"
+                    : "Create account"}
+              </span>
+              <span className="submit-sparkle">✦</span>
+              <span className="submit-arrow">→</span>
+            </button>
+          </form>
+
+          <div className="auth-or">
+            <span />
+            <span>your little corner of the internet</span>
+            <span />
+          </div>
+
+          <p className="auth-switch-text">
+            {authMode === "login"
+              ? "New to SHREYA?"
+              : "Already have an account?"}
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode(authMode === "login" ? "signup" : "login");
+                setAuthError("");
+              }}
+            >
+              {authMode === "login" ? "Create account" : "Log in"}
+            </button>
+          </p>
+
+          <div className="card-flower flower-one">✿</div>
+          <div className="card-flower flower-two">❀</div>
+        </section>
+      </main>
+
+      <footer className="auth-footer">
+        Made for your thoughts, saved with love <span>♡</span>
+      </footer>
     </div>
   );
 }
+
 
   return (
     <div className="app-shell">
