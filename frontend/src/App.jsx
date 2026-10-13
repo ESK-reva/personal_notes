@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 const API_URL = "/api/notes";
-const AUTH_API = "/api/auth";
+const AUTH_API = "/api/auth-handler";
 
 
 function App() {
@@ -46,8 +46,7 @@ const [authLoading, setAuthLoading] = useState(true);
 useEffect(() => {
   const checkSession = async () => {
     try {
-      const response = await fetch(`${AUTH_API}/me`);
-
+      const response = await fetch(`${AUTH_API}?action=me`);
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
@@ -82,9 +81,11 @@ const handleAuth = async (e) => {
 
   try {
     const endpoint =
-      authMode === "signup" ? "signup" : "login";
+  authMode === "signup" ? "signup" : "login";
 
-    const response = await fetch(`${AUTH_API}/${endpoint}`, {
+const response = await fetch(
+  `${AUTH_API}?action=${endpoint}`,
+  {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -114,7 +115,7 @@ const handleAuth = async (e) => {
 
 const handleLogout = async () => {
   try {
-    await fetch(`${AUTH_API}/logout`, {
+    await fetch(`${AUTH_API}?action=logout`, {
       method: "POST",
     });
   } finally {
