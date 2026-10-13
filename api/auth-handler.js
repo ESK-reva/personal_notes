@@ -110,7 +110,6 @@ export default async function handler(req, res) {
             });
         }
 
-        res.setHeader("Allow", "GET, POST");
         return res.status(404).json({
             error: "Unknown authentication action"
         });
